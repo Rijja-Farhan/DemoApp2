@@ -6,6 +6,7 @@ import { List, Button, Typography, Space, Alert } from 'antd';
 const { Title } = Typography;
 
 function CourseList() {
+    const userRole = useSelector((state) => state.user.role);
   const courses = useSelector((state) => state.courses.courses);
   const dispatch = useDispatch();
 
@@ -23,9 +24,14 @@ function CourseList() {
       <List
         itemLayout="horizontal"
         dataSource={courses}
+        
+    
+
         renderItem={(course) => (
+            
           <List.Item
-            actions={[
+            actions={
+                userRole === 'admin'?[
               <Button
                 type="primary"
                 onClick={() => handleEdit(course)}
@@ -38,7 +44,7 @@ function CourseList() {
               >
                 Delete
               </Button>
-            ]}
+            ]:[]}
           >
             <List.Item.Meta
               title={course.name}

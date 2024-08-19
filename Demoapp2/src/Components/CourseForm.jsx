@@ -42,7 +42,7 @@ function CourseForm() {
       formik.setValues({ name: editingCourse.name,code: editingCourse.code,
         creditHours: editingCourse.creditHours });
     } else {
-      formik.resetForm(); // Reset the form if not editing
+      formik.resetForm(); 
     }
   }, [editingCourse]);
 
