@@ -1,21 +1,59 @@
-import React from 'react';
+import React, { useEffect, useState,useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { deleteCourse, setEditingCourse } from '../state/slices/courseSlice';
+import { fetchCourses,setEditingCourse } from '../state/slices/courseSlice';
 import { List, Button, Typography, Space, Alert } from 'antd';
 
 const { Title } = Typography;
 
-function CourseList() {
-    const userRole = useSelector((state) => state.user.role);
-  const courses = useSelector((state) => state.courses.courses);
+function CourseList({userRole}) {
+  
   const dispatch = useDispatch();
+ 
 
-  const handleDelete = (courseId) => {
-    dispatch(deleteCourse(courseId));
+  const { courses } = useSelector((state) => state.courses);
+    
+  
+
+    useEffect(() => {
+      dispatch(fetchCourses());
+    }, [dispatch]);
+  
+
+  const handleDelete = async (courseid) => {
+  
+    try 
+    {
+     const response = await fetch(`http://localhost:3000/course/${courseid}`,
+       {
+         method:'DELETE',
+         headers: {
+         'Content-Type': 'application/json'
+         }
+       }
+     )
+     if (!response.ok) {
+      throw new Error('Failed to delete course');
+    }
+   
+   
+   const result = await response.json();
+ 
+
+ 
+   dispatch(fetchCourses())
+
+    }
+    catch(error)
+    {
+     console.log(error)
+    }
+
+    
   };
 
-  const handleEdit = (course) => {
-    dispatch(setEditingCourse(course));
+  const handleEdit = async(course) => {
+     dispatch(setEditingCourse(course))
+  
   };
 
   return (
@@ -27,31 +65,31 @@ function CourseList() {
         
     
 
-        renderItem={(course) => (
+        renderItem={(courses) => (
             
           <List.Item
             actions={
                 userRole === 'admin'?[
               <Button
                 type="primary"
-                onClick={() => handleEdit(course)}
+                onClick={() => handleEdit(courses)}
               >
                 Edit
               </Button>,
               <Button
                 type="danger"
-                onClick={() => handleDelete(course.id)}
+                onClick={() => handleDelete(courses._id)}
               >
                 Delete
               </Button>
             ]:[]}
           >
             <List.Item.Meta
-              title={course.name}
+              title={courses.name}
               description={
                 <Space direction="vertical">
-                  <div><strong>Code:</strong> {course.code}</div>
-                  <div><strong>Credit Hours:</strong> {course.creditHours}</div>
+                  <div><strong>Code:</strong> {courses.code}</div>
+                  <div><strong>Credit Hours:</strong> {courses.creditHours}</div>
                 </Space>
               }
             />

@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useSelector, useDispatch } from 'react-redux';
-import { addCourse, updateCourse, clearEditingCourse } from '../state/slices/courseSlice';
+import { fetchCourses } from '../state/slices/courseSlice';
+import {  updateCourse, clearEditingCourse } from '../state/slices/courseSlice';
 
 function CourseForm() {
   const dispatch = useDispatch();
@@ -12,39 +13,72 @@ function CourseForm() {
   const formik = useFormik({
     initialValues: {
       name: '',
-      code:"",
-      creditHours:""
+      code: '',
+      creditHours: ''
     },
     validationSchema: Yup.object({
       name: Yup.string().required('Course name is required'),
       code: Yup.string().required('Course code is required'),
       creditHours: Yup.number().required('Credit hours are required').positive('Credit hours must be a positive number'),
     }),
-    onSubmit: (values) => {
-      if (editingCourse) {
-        dispatch(updateCourse({ id: editingCourse.id,   name: values.name,
-            code: values.code,
-            creditHours: values.creditHours }));
-        dispatch(clearEditingCourse()); 
-      } else {
-        dispatch(addCourse({ id: Date.now(),   name: values.name,
-            code: values.code,
-            creditHours: values.creditHours }));
-      }
-      formik.resetForm(); 
+    onSubmit: async (values) => {
+     
+if(!editingCourse){
+          const response = await fetch('http://localhost:3000/course/add', {
+            method: 'POST',
+            body: JSON.stringify(values),
+            headers: {
+              'Content-Type': 'application/json;charset=UTF-8'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to add course');
+          }
+         
+
+
+        }
+          if(editingCourse)
+          {
+            
+            dispatch(updateCourse({
+              id: editingCourse._id,
+              name: values.name,
+              code: values.code,
+              creditHours: values.creditHours
+            }))
+            
+            
+           
+          }
+          dispatch(fetchCourses())
+    dispatch(clearEditingCourse());
+    formik.resetForm()
+         
+        
+
+       
+         
+   
+   
+
+        
+      
+      
     },
   });
 
-  
   useEffect(() => {
     if (editingCourse) {
-        
-      formik.setValues({ name: editingCourse.name,code: editingCourse.code,
-        creditHours: editingCourse.creditHours });
-    } else {
-      formik.resetForm(); 
+      formik.setValues({
+        name: editingCourse.name,
+        code: editingCourse.code,
+        creditHours: editingCourse.creditHours
+      });
     }
   }, [editingCourse]);
+  
 
   return (
     <form onSubmit={formik.handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
