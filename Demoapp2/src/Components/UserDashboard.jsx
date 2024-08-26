@@ -1,9 +1,28 @@
 import React from 'react';
 import CourseList from './CourseList';
 import {useLocation} from 'react-router-dom'
+import { useSelector } from 'react-redux';
+import { Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 
 function UserDashboard() {
+ const navigate = useNavigate()
+ const {  userId } = useSelector((state) => state.user);
+
+  const handleViewCourses=async(courseId)=>{
+    try 
+    {
+      
+      navigate('/studentCourses',{state:{userId}})
+      
+      
+    }
+    catch(error)
+    {
+      console.log(error)
+    }
+  }
   const {state} =location
   const {userrole} =state || {}
 
@@ -14,7 +33,8 @@ function UserDashboard() {
       
 
       <div className="max-w-4xl mx-auto mt-10">
-      <CourseList  userRole={userrole}  />
+        <Button onClick={handleViewCourses}>View Student courses</Button>
+      <CourseList    />
       </div>
     </div>
   );

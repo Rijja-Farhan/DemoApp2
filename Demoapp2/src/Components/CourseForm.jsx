@@ -32,9 +32,7 @@ if(!editingCourse){
             }
           });
 
-          if (!response.ok) {
-            throw new Error('Failed to add course');
-          }
+         
          
 
 
@@ -48,23 +46,11 @@ if(!editingCourse){
               code: values.code,
               creditHours: values.creditHours
             }))
-            
-            
-           
+
           }
           dispatch(fetchCourses())
     dispatch(clearEditingCourse());
     formik.resetForm()
-         
-        
-
-       
-         
-   
-   
-
-        
-      
       
     },
   });

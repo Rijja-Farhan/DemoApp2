@@ -1,40 +1,27 @@
 import React from 'react';
 import { Form, Input, Button, message } from 'antd';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import 'antd/dist/reset.css'; // Import Ant Design styles
+import { loginUser } from '../state/slices/userSlice';
 
 const LoginPage = () => {
-    const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const onFinish = async (values) => {
-    
-    
-
     try {
-      const response = await fetch('http://localhost:3000/login', {
-        method: 'POST',
-        body: JSON.stringify(values),
-        headers: {
-          'Content-Type': 'application/json;charset=UTF-8',
-        },
-      });
-
-      const result = await response.json();
-      if (response.ok) {
+      const resultAction = await dispatch(loginUser(values));
+     
+      if (loginUser.fulfilled.match(resultAction)) {
         message.success('Login successful');
-       
-       const role= result.role
-       if(role === 'admin')
-       {
-        navigate('/AdminDashboard',{state:{userrole:role}}
-
-        )
-       }
-       else if  (role ==='user')
-       {
-        navigate('/UserDashboard',{state:{userrole:role}})
-       }
+        const { userId, role } = resultAction.payload;
+        if (role === 'admin') {
+          navigate('/AdminDashboard', { state: { userRole: role } });
+        } else if (role === 'student') {
+          navigate('/UserDashboard', { state: { userRole: role } });
+        }
       } else {
-        message.error(result.message || 'Login failed');
+        message.error(resultAction.payload || 'Login failed');
       }
     } catch (error) {
       message.error('An error occurred');
@@ -45,10 +32,7 @@ const LoginPage = () => {
   return (
     <div style={{ maxWidth: '400px', margin: 'auto', padding: '20px' }}>
       <h1 style={{ textAlign: 'center' }}>Login</h1>
-      <Form
-        layout="vertical"
-        onFinish={onFinish}
-      >
+      <Form layout="vertical" onFinish={onFinish}>
         <Form.Item
           label="Email"
           name="email"

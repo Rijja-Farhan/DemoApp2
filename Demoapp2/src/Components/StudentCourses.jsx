@@ -1,0 +1,115 @@
+import React, { useEffect, useState } from 'react';
+import { Table, Button, Space, message } from 'antd';
+import { useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchCourses } from '../state/slices/courseSlice'; // Adjust import if necessary
+
+const StudentCourses = () => {
+  const location = useLocation();
+  const { courses = [] } = location.state || {}; // Access courses from state
+  const { userId } = useSelector((state) => state.user);
+  const dispatch = useDispatch(); // To dispatch actions to refresh the course list
+  const [courseList, setCourseList] = useState(courses);
+  
+  useEffect(() => {
+    fetchStudentCourses()
+  }, [])
+  
+  
+
+  const fetchStudentCourses=async()=>{
+    try{
+        const response = await fetch(`http://localhost:3000/student/${userId}/courseview`)
+      if(response.ok)
+      {
+       
+     
+      const data=await response.json()
+     
+      setCourseList(data.courses)
+    }
+}
+    catch(error)
+    {
+        console.log(error)
+    }
+  }
+
+
+
+  // Handler for deleting a course
+  const handleDelete = async (courseId) => {
+ 
+    try {
+       
+      const response = await fetch(`http://localhost:3000/student/${userId}/${courseId}/coursedelete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+         
+      });
+      fetchStudentCourses()
+  
+      const result = await response.json();
+  
+      if (response.ok) {
+        setCourseList((prevCourses) => prevCourses.filter(course => course.id !== courseId));
+        message.success('Course deleted successfully');
+      } else {
+        message.error(result.message || 'Failed to delete course');
+      }
+    } catch (error) {
+      message.error('An error occurred while deleting the course');
+      console.error('Error:', error);
+    }
+  };
+  
+
+  // Define columns for the Ant Design table
+  const columns = [
+    {
+      title: 'Course Name',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Course Code',
+      dataIndex: 'code',
+      key: 'code',
+    },
+    {
+      title: 'Credit Hours',
+      dataIndex: 'creditHours',
+      key: 'creditHours',
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: ( record) => (
+        <Space size="middle">
+          <Button 
+            type="danger" 
+            onClick={() => handleDelete(record._id)}
+          >
+            Delete
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h1>Student Courses</h1>
+      <Table
+        columns={columns}
+        dataSource={courseList} // Use local state for the course list
+        rowKey="id" // Ensure each row has a unique key
+      />
+    </div>
+  );
+};
+
+export default StudentCourses;
