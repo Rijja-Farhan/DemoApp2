@@ -74,13 +74,12 @@ export const studentCourseView = async (req, res) => {
 //delete student course
 export const studentCourseDelete = async (req, res) => {
   const { userId, courseId } = req.params;
-  console.log("userId: ", userId);
-  console.log("courseId: ", courseId);
+
 
   try {
     console.log(userId);
     const student = await User.findById(userId);
-    console.log(student);
+  
     if (!student) {
       return res
         .status(500)
