@@ -1,54 +1,46 @@
-import bcrypt from "bcrypt"; // Ensure the correct package name
+import bcrypt from "bcrypt";
 import { User } from "../models/User.js";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken"
+import { response } from "express";
+
+
+
 
 dotenv.config();
-const connectionString = process.env.MONGO_URI;
 
-// Wrap connection in an async function or IIFE
-(async () => {
-  try {
-    await mongoose.connect(connectionString, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected');
-  } catch (error) {
-    console.error('Error connecting to MongoDB:', error);
-  }
-})();
+
+
+
 
 export const signup = async (req, res) => {
-  const { email, password, username, role } = req.body;
-
   try {
-    const userExist = await User.findOne({ email });
-    if (userExist) {
+    const { email, password, username, role } = req.body;
+    
+    const userExists = await User.findOne({ email });
+    if (userExists) {
       return res.status(400).json({ message: "User already registered" });
     }
-
-    // Hashing the password
     const hashPassword = await bcrypt.hash(password, 10);
-
-    // Creating a new user
     const user = new User({
       username,
       email,
       password: hashPassword,
-      role,
+      role
     });
-    
     await user.save();
-    return res.json({ status: true, message: "User registered" });
+    return res.status(201).json({ status: true, message: "Record registered" });
   } catch (error) {
-    return res.status(500).json({ status: false, message: "An error occurred", error: error.message });
+    console.error("Signup Error:", error);
+    return res
+      .status(500)
+      .json({ status: false, message: "An error occurred" });
   }
 };
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const user = await User.findOne({ email });
 
@@ -58,18 +50,26 @@ export const login = async (req, res) => {
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res.status(401).json({ message: "Password is incorrect" });
+      return res.status(401).json({ message: "Password is not valid" });
     }
 
-    return res.json({
-      status: true,
-      message: "Login Successful",
-      role: user.role,
-      userId:user._id
+    const token = jwt.sign({ userid: user._id.toString() }, process.env.PRIVATE_KEY, {
+      expiresIn: "1h",
     });
+    res.cookie("token", token, { httpOnly: true, maxAge: 3600000 }); // 1 hour
+    return res
+      .status(200)
+      .json({ status: true, message: "Login successful", id: user._id, role: user.role});
   } catch (error) {
-    return res.status(500).json({ status: false, message: "An error occurred", error: error.message });
+    console.error("Error logging in:", error);
+    return res.status(500).json({ message: "An error occurred during login" });
   }
+}
 
 
+
+export const logout = async (req, res) => {
+  res.clearCookie("token"); 
+  res.status(200).json({ message: "Logged out successfully" });
 };
+

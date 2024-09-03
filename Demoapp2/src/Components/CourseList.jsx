@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCourses, setEditingCourse } from '../state/slices/courseSlice';
-import { List, Button, Typography, Space, Alert, message } from 'antd'; // Import message from Ant Design
+import { List, Button, Typography, Space, Alert, message } from 'antd';
 
 const { Title } = Typography;
 
@@ -11,7 +11,6 @@ function CourseList() {
   const { userRole, userId } = useSelector((state) => state.user);
 
   useEffect(() => {
-    console.log(userRole)
     dispatch(fetchCourses());
   }, [dispatch]);
 
@@ -27,23 +26,27 @@ function CourseList() {
       if (!response.ok) {
         throw new Error('Failed to delete course');
       }
+      else{
+        message.success('Course deleted successfully');
+      }
 
       await response.json();
       dispatch(fetchCourses());
     } catch (error) {
-      console.log(error);
+      message.error('Failed to delete course');
+      console.error(error);
     }
   };
 
   const handleEdit = (course) => {
     dispatch(setEditingCourse(course));
+   
   };
 
   const handleStudentCourseAdd = async (courseId) => {
-    try {
-      console.log("User ID:", userId);  // Log the userId to check its value
-      console.log("Course ID:", courseId);  // Log the courseId to check its value
+  console.log(userId);
   
+    try {
       const response = await fetch(`http://localhost:3000/student/${userId}/courseadd`, {
         method: 'POST',
         headers: {
@@ -51,17 +54,17 @@ function CourseList() {
         },
         body: JSON.stringify({ courseId })
       });
-  
+
       if (response.ok) {
         message.success('Course added successfully');
       } else {
         throw new Error('Failed to add course');
       }
     } catch (error) {
-      console.log(error);
+      message.error('Failed to add course');
+      console.error(error);
     }
   };
-  
 
   const handleStudentCourseDelete = async (courseId) => {
     try {
@@ -75,8 +78,12 @@ function CourseList() {
       if (!response.ok) {
         throw new Error('Failed to delete course');
       }
+      
+      message.success('Course removed successfully');
+      dispatch(fetchCourses());
     } catch (error) {
-      console.log(error);
+      message.error('Failed to remove course');
+      console.error(error);
     }
   };
 

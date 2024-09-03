@@ -1,5 +1,7 @@
 import { Course } from "../models/Course.js";
-
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 //Add new Course
 export const courseAdd = async (req, res) => {
  
@@ -8,42 +10,55 @@ export const courseAdd = async (req, res) => {
   try {
     // Input validation can be added here
     if (!name || !code || !creditHours) {
-      return res.status(400).json({ status: false, message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ status: false, message: "All fields are required" });
     }
 
     const courseExist = await Course.findOne({ code });
     if (courseExist) {
-      return res.status(409).json({ status: false, message: "Course already exists" });
+      return res
+        .status(409)
+        .json({ status: false, message: "Course already exists" });
     }
-   
-    // Creating new course
+
     const course = new Course({
       name,
       code,
       creditHours,
     });
- 
+
     await course.save();
-    return res.status(201).json({ status: true, message: "Course added successfully" });
+    return res
+      .status(201)
+      .json({ status: true, message: "Course added successfully" });
   } catch (error) {
-    console.error("Error adding course:", error); // Log the error for debugging
-    return res.status(500).json({ status: false, message: "An error occurred while adding the course" });
+    console.error("Error adding course:", error);
+    return res
+      .status(500)
+      .json({
+        status: false,
+        message: "An error occurred while adding the course",
+      });
   }
 };
-
 
 //View All courses
 export const viewCourseList = async (req, res) => {
- 
+
   try {
     const courses = await Course.find();
-    return res.json(courses); // Use res.json() to send the response
+    return res.json(courses);
   } catch (error) {
-    console.error("Error retrieving course list:", error); // Log the error for debugging
-    return res.status(500).json({ status: false, message: "An error occurred while retrieving the course list" });
+    console.error("Error retrieving course list:", error);
+    return res
+      .status(500)
+      .json({
+        status: false,
+        message: "An error occurred while retrieving the course list",
+      });
   }
 };
-
 
 //delete course from course list
 export const deleteCourse = async (req, res) => {

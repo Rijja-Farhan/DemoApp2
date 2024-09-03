@@ -2,18 +2,39 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import bodyParser from "body-parser"
+import cookieParser from "cookie-parser"
+
+
+
+
+
+
 
 const app = express();
 const port = 3000;
 
 app.use(express.json());
-app.use(cors());
+const corsOptions = {
+  origin: 'http://localhost:5173', // Your frontend URL
+  credentials: true, // Allow cookies and credentials to be sent
+};
+
+app.use(cors(corsOptions));
+
 dotenv.config();
+
+app.use(cookieParser());
+app.use(bodyParser.json());
 const connectionString = process.env.MONGO_URI;
 
 import { AuthRoutes } from "./routes/Auth.js";
 import { CourseRoutes } from "./routes/Course.js";
 import { StudentRoutes } from "./routes/Student.js";
+
+
+
+
 
 // Wrapping the server start in an async function
 async function startServer() {

@@ -1,5 +1,7 @@
 import express from 'express';
 import {courseAdd,viewCourseList,deleteCourse,updateCourse} from '../Controllers/CourseControllers.js'
+import { authenticateToken } from '../middleware/Auth.js';
+
 
 const CourseRoutes = express.Router();
 

@@ -5,13 +5,13 @@ const UserSchema = new mongoose.Schema({
     email: { type: String, required: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['admin', 'student'], required: true },
-    // Conditionally add course references for students only
+    
     courses: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course',
         required: function () {
-          return this.role === 'student'; // Courses reference only if user is a student
+          return this.role === 'student';
         },
       },
     ],

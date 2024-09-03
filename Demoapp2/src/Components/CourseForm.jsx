@@ -1,111 +1,135 @@
-import React, { useEffect } from 'react';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchCourses } from '../state/slices/courseSlice';
-import {  updateCourse, clearEditingCourse } from '../state/slices/courseSlice';
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  fetchCourses,
+  updateCourse,
+  clearEditingCourse,
+} from "../state/slices/courseSlice";
+import { message } from "antd";
 
 function CourseForm() {
   const dispatch = useDispatch();
   const editingCourse = useSelector((state) => state.courses.editingCourse);
 
-  // Initialize Formik
-  const formik = useFormik({
-    initialValues: {
-      name: '',
-      code: '',
-      creditHours: ''
-    },
-    validationSchema: Yup.object({
-      name: Yup.string().required('Course name is required'),
-      code: Yup.string().required('Course code is required'),
-      creditHours: Yup.number().required('Credit hours are required').positive('Credit hours must be a positive number'),
-    }),
-    onSubmit: async (values) => {
-     
-if(!editingCourse){
-          const response = await fetch('http://localhost:3000/course/add', {
-            method: 'POST',
-            body: JSON.stringify(values),
-            headers: {
-              'Content-Type': 'application/json;charset=UTF-8'
-            }
-          });
-
-         
-         
-
-
-        }
-          if(editingCourse)
-          {
-            
-            dispatch(updateCourse({
-              id: editingCourse._id,
-              name: values.name,
-              code: values.code,
-              creditHours: values.creditHours
-            }))
-
-          }
-          dispatch(fetchCourses())
-    dispatch(clearEditingCourse());
-    formik.resetForm()
-      
-    },
-  });
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [creditHours, setCreditHours] = useState("");
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (editingCourse) {
-      formik.setValues({
-        name: editingCourse.name,
-        code: editingCourse.code,
-        creditHours: editingCourse.creditHours
-      });
+      setName(editingCourse.name);
+      setCode(editingCourse.code);
+      setCreditHours(editingCourse.creditHours);
     }
   }, [editingCourse]);
-  
+
+  const validate = () => {
+    const newErrors = {};
+    if (!name) newErrors.name = "Course name is required";
+    if (!code) newErrors.code = "Course code is required";
+    if (!creditHours) {
+      newErrors.creditHours = "Credit hours are required";
+    } else if (
+      isNaN(creditHours) ||
+      creditHours <= 0 ||
+      !Number.isInteger(+creditHours)
+    ) {
+      newErrors.creditHours = "Credit hours must be a positive integer";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!validate()) return;
+
+    try {
+
+      //incase of new course addition
+      if (!editingCourse) {
+        const response = await fetch("http://localhost:3000/course/add", {
+          method: "POST",
+          body: JSON.stringify({ name, code, creditHours }),
+          headers: {
+            "Content-Type": "application/json;charset=UTF-8",
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to add course: ${errorData.message}`);
+        }
+        if (response.ok) {
+          message.success("Course added successfully");
+        }
+      } 
+      //incase of course editing
+      else {
+        console.log("in editing");
+        console.log(editingCourse._id, name, code, creditHours);
+        await dispatch(
+          updateCourse({
+            id: editingCourse._id,
+            name,
+            code,
+            creditHours,
+          })
+        );
+      }
+
+      dispatch(fetchCourses());
+      dispatch(clearEditingCourse());
+      setName("");
+      setCode("");
+      setCreditHours("");
+      setErrors({});
+    } catch (error) {
+      console.error("Error:", error);
+     
+    }
+  };
 
   return (
-    <form onSubmit={formik.handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 bg-white p-6 rounded-lg shadow-md"
+    >
       <input
         type="text"
-        id="name"
-        name="name"
-        value={formik.values.name}
-        onChange={formik.handleChange}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
         placeholder="Course name"
         className="w-full p-2 border border-gray-300 rounded"
       />
-      {formik.errors.name ? <div className="text-red-500">{formik.errors.name}</div> : null}
-      
+      {errors.name && <div className="text-red-500">{errors.name}</div>}
+
       <input
         type="text"
-        id="code"
-        name="code"
-        value={formik.values.code}
-        onChange={formik.handleChange}
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
         placeholder="Course code"
         className="w-full p-2 border border-gray-300 rounded"
       />
-      {formik.errors.code ? <div className="text-red-500">{formik.errors.code}</div> : null}
+      {errors.code && <div className="text-red-500">{errors.code}</div>}
 
       <input
         type="number"
-        id="creditHours"
-        name="creditHours"
-        value={formik.values.creditHours}
-        onChange={formik.handleChange}
+        value={creditHours}
+        onChange={(e) => setCreditHours(e.target.value)}
         placeholder="Course credit hours"
         className="w-full p-2 border border-gray-300 rounded"
       />
-      {formik.errors.creditHours ? <div className="text-red-500">{formik.errors.creditHours}</div> : null}
+      {errors.creditHours && (
+        <div className="text-red-500">{errors.creditHours}</div>
+      )}
 
       <button
         type="submit"
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-200"
       >
-        {editingCourse ? 'Update' : 'Add'} Course
+        {editingCourse ? "Update" : "Add"} Course
       </button>
     </form>
   );
