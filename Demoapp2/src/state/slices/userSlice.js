@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-
+// Asynchronous actions
 export const loginUser = createAsyncThunk(
   "user/loginUser",
   async (loginData, { rejectWithValue }) => {
@@ -11,6 +11,7 @@ export const loginUser = createAsyncThunk(
         headers: {
           "Content-Type": "application/json;charset=UTF-8",
         },
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -18,13 +19,14 @@ export const loginUser = createAsyncThunk(
       }
 
       const result = await response.json();
-      return result; 
+      console.log(result)
+      localStorage.setItem("user", JSON.stringify(result)); // Save to localStorage
+      return result;
     } catch (error) {
-      return rejectWithValue(error.message); 
+      return rejectWithValue(error.message);
     }
   }
 );
-
 
 export const logoutUser = createAsyncThunk(
   "user/logoutUser",
@@ -41,48 +43,21 @@ export const logoutUser = createAsyncThunk(
         throw new Error("Failed to logout");
       }
 
-      const result = await response.json();
-      return result; 
+      localStorage.removeItem("user"); // Remove from localStorage
+      return;
     } catch (error) {
-      return rejectWithValue(error.message); 
+      return rejectWithValue(error.message);
     }
   }
 );
 
-
-// export const getUser = createAsyncThunk('user/getUser', async () => {
-//  console.log("in get users")
-//   try {
-//     const response = await fetch('http://localhost:3000/auth/getUser', {
-//       method: 'GET',
-//       headers: {
-//         'Content-Type': 'application/json;charset=UTF-8',
-//       },
-//    credentials: 'include'
-//     });
-
-//     console.log(response);
-//     if (!response.ok) {
-//       throw new Error('Failed to fetch user details');
-//     }
-
-//     const result = await response.json();
-
-//     return result; // Return result to be used in fulfilled case
-//   } catch (error) {
-//     console.log(error.message); // Handle errors
-//   }
-// });
-
+// Initial state
 const initialState = {
-  user: null,
-  status: "idle",
-  error: null,
-  userRole: null,
-  userId: null,
-  token: null,
+  user: JSON.parse(localStorage.getItem("user")) || null, // Load from localStorage
+ 
 };
 
+// Create slice
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -94,10 +69,8 @@ const userSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.user = action.payload; 
-        state.userId = action.payload.id;
-        state.userRole = action.payload.role;
-        state.token = action.payload.token;
+        state.user = action.payload;
+       
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = "failed";
@@ -109,11 +82,8 @@ const userSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.status = "succeeded";
         state.user = null;
-        state.userId = null;
-        state.userRole = null;
-        state.token = null; 
+        
       });
-   
   },
 });
 

@@ -3,13 +3,21 @@ import { Form, Input, Button, message } from "antd";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../state/slices/userSlice";
-
+import { useSelector } from "react-redux";
 const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const user = useSelector((state) => state.user.user);
+  const fullState = useSelector((state) => state);
+
+// Log the full state to the console
+console.log("Full Redux State:", fullState);
+
+    
 
   const onFinish = async (values) => {
     try {
+      // console.log(userId)
       const resultAction = await dispatch(loginUser(values));
     
       if (loginUser.fulfilled.match(resultAction)) {
@@ -19,7 +27,7 @@ const LoginPage = () => {
         if (role === "admin") {
           navigate("/AdminDashboard", { state: { userRole: role } });
         } else if (role === "student") {
-          navigate("/UserDashboard", { state: { userRole: role } });
+          navigate("/studentCourses", { state: { userRole: role } });
         }
       } else {
         message.error(resultAction.payload || "Login failed");

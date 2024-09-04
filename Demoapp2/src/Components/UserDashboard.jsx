@@ -1,22 +1,46 @@
-import React from "react";
-import CourseList from "./CourseList";
+import React, { useEffect, useState } from "react";
+import CourseList from "./CourseManager/CourseList";
 
 import { useSelector } from "react-redux";
 import { Button } from "antd";
 import { useNavigate } from "react-router-dom";
 
+
 function UserDashboard() {
   const navigate = useNavigate();
-  const { userId } = useSelector((state) => state.user);
+
+  const { courses, studentCourses, loading, error } = useSelector((state) => state.courses || {});
+
+  console.log("Course: ",courses)
+  console.log("Student Course: ",studentCourses)
+  
+  const [filteredCourses, setFilteredCourses] = useState([]);
+
+  
+  const filterAvailableCourses = () => {
+    if (!courses || !studentCourses) return [];
+    return courses.filter((course) =>
+      !studentCourses.some((studentCourse) => studentCourse._id === course._id)
+    );
+  };
+  
+
+  
+  useEffect(() => {
+    const result = filterAvailableCourses();
+    setFilteredCourses(result); 
+    console.log(filteredCourses)
+  }, [courses, studentCourses]);
 
   const handleViewCourses = async () => {
     try {
-      navigate("/studentCourses", { state: { userId } });
+      navigate("/studentCourses",);
     } catch (error) {
       console.log(error);
     }
   };
-  const { state } = location;
+
+  
  
 
   return (
@@ -27,7 +51,7 @@ function UserDashboard() {
 
       <div className="max-w-4xl mx-auto mt-10">
         <Button onClick={handleViewCourses}>View Student courses</Button>
-        <CourseList />
+        <CourseList  />
       </div>
     </div>
   );

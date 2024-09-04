@@ -1,28 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   fetchCourses,
-  updateCourse,
   clearEditingCourse,
-} from "../state/slices/courseSlice";
+} from "../../state/slices/courseSlice";
+import { useLocation } from "react-router-dom";
 import { message } from "antd";
 
 function CourseForm() {
   const dispatch = useDispatch();
-  const editingCourse = useSelector((state) => state.courses.editingCourse);
+  const location = useLocation();
 
+  const course = location.state?.course;
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [creditHours, setCreditHours] = useState("");
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (editingCourse) {
-      setName(editingCourse.name);
-      setCode(editingCourse.code);
-      setCreditHours(editingCourse.creditHours);
+    if (course) {
+      setName(course.name);
+      setCode(course.code);
+      setCreditHours(course.creditHours);
     }
-  }, [editingCourse]);
+  }, [course]);
 
   const validate = () => {
     const newErrors = {};
@@ -46,9 +47,8 @@ function CourseForm() {
     if (!validate()) return;
 
     try {
-
       //incase of new course addition
-      if (!editingCourse) {
+      if (!course) {
         const response = await fetch("http://localhost:3000/course/add", {
           method: "POST",
           body: JSON.stringify({ name, code, creditHours }),
@@ -64,19 +64,28 @@ function CourseForm() {
         if (response.ok) {
           message.success("Course added successfully");
         }
-      } 
+      }
       //incase of course editing
       else {
         console.log("in editing");
-        console.log(editingCourse._id, name, code, creditHours);
-        await dispatch(
-          updateCourse({
-            id: editingCourse._id,
-            name,
-            code,
-            creditHours,
-          })
+        const response = await fetch(
+          `http://localhost:3000/course/${course._id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({ name, code, creditHours }),
+            headers: {
+              "Content-Type": "application/json;charset=UTF-8",
+            },
+          }
         );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to add course: ${errorData.message}`);
+        }
+        if (response.ok) {
+          message.success("Course added successfully");
+        }
       }
 
       dispatch(fetchCourses());
@@ -87,7 +96,6 @@ function CourseForm() {
       setErrors({});
     } catch (error) {
       console.error("Error:", error);
-     
     }
   };
 
@@ -129,7 +137,7 @@ function CourseForm() {
         type="submit"
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-200"
       >
-        {editingCourse ? "Update" : "Add"} Course
+        {course ? "Update" : "Add"} Course
       </button>
     </form>
   );

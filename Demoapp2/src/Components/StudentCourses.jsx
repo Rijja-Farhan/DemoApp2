@@ -1,39 +1,42 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Space, message } from "antd";
 import { useLocation } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchCourses } from "../state/slices/courseSlice"; // Adjust import if necessary
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {fetchStudentCourses} from "../state/slices/courseSlice"
 
 const StudentCourses = () => {
   const location = useLocation();
-  const { courses = [] } = location.state || {}; // Access courses from state
-  const { userId } = useSelector((state) => state.user);
+  
+  const { courses, studentCourses, loading, error } = useSelector((state) => state.courses || {});
+  const {  user } = useSelector((state) => state.user);
   const [courseList, setCourseList] = useState(courses);
+  const dispatch = useDispatch()
+  const navigate =useNavigate()
+  const fullState = useSelector((state) => state);
+
+  // Log the full state to the console
+  console.log("Full Redux State:", fullState);
+  
 
   useEffect(() => {
-    fetchStudentCourses();
+    
+    dispatch(fetchStudentCourses())
   }, []);
 
-  const fetchStudentCourses = async () => {
-    try {
-      const response = await fetch(
-        `http://localhost:3000/student/${userId}/courseview`
-      );
-      if (response.ok) {
-        const data = await response.json();
-
-        setCourseList(data.courses);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const handleAddCourse=()=>{
+    navigate("/UserDashboard")
+  }
+  
 
   // Handler for deleting a course
   const handleDelete = async (courseId) => {
     try {
+      
+      console.log(courseId)
       const response = await fetch(
-        `http://localhost:3000/student/${userId}/${courseId}/coursedelete`,
+        `http://localhost:3000/student/${user.id}/${courseId}/coursedelete`,
         {
           method: "DELETE",
           headers: {
@@ -41,7 +44,7 @@ const StudentCourses = () => {
           },
         }
       );
-      fetchStudentCourses();
+      dispatch(fetchStudentCourses())
 
       const result = await response.json();
 
@@ -91,9 +94,15 @@ const StudentCourses = () => {
   return (
     <div style={{ padding: "20px" }}>
       <h1>Student Courses</h1>
+      <Button
+                      type="primary"
+                      onClick={() => handleAddCourse()}
+                    >
+                      Add Courses
+      </Button>
       <Table
         columns={columns}
-        dataSource={courseList} 
+        dataSource={studentCourses} 
         rowKey="id" 
       />
     </div>

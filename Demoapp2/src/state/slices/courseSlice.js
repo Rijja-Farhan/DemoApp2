@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {  message } from "antd";
 
-
+// Thunk to fetch all courses
 export const fetchCourses = createAsyncThunk(
   "courses/fetchCourses",
   async () => {
@@ -11,54 +10,63 @@ export const fetchCourses = createAsyncThunk(
     }
 
     const result = await response.json();
-    return result;
+    return result; // Assuming the API returns an array of courses
   }
 );
 
+// Thunk to fetch student-specific courses
+export const fetchStudentCourses = createAsyncThunk(
+  'courses/fetchStudentCourses', 
+  async (_, thunkAPI) => {
+    const state = thunkAPI.getState();
+    const user = state.user.user;
 
-export const updateCourse = createAsyncThunk(
-  "courses/updateCourse",
-  async (course, { dispatch }) => {
-    const { id, name, code, creditHours } = course;
-
+    console.log("Fetching student courses...");
+   
     try {
-      const response = await fetch(`http://localhost:3000/course/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          code,
-          creditHours,
-        }),
-      });
-      console.log(response);
-      if (!response.ok) {
-        throw new Error("Failed to update course");
+      const response = await fetch(
+        `http://localhost:3000/student/${user.id}/courseview`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        return data.courses; 
       } else {
-        message.success("Course updated successfully");
+        return thunkAPI.rejectWithValue('Failed to fetch student courses');
       }
-      const result = await response.json();
-
-     
-      await dispatch(fetchCourses());
-
-      return result;
     } catch (error) {
-      throw error;
+      return thunkAPI.rejectWithValue(error.message);
     }
   }
 );
 
+// Load initial state from localStorage
+const loadStateFromLocalStorage = () => {
+  try {
+    const serializedState = localStorage.getItem('coursesState');
+    if (serializedState) {
+      return JSON.parse(serializedState);
+    }
+    return {
+      courses: [],
+      loading: false,
+      error: null,
+      studentCourses: [], 
+    };
+  } catch (error) {
+    return {
+      courses: [],
+      loading: false,
+      error: null,
+      studentCourses: [], 
+    };
+  }
+};
+
+const initialState = loadStateFromLocalStorage();
+
 const courseSlice = createSlice({
   name: "courses",
-  initialState: {
-    courses: [],
-    loading: false,
-    error: null,
-    editingCourse: null,
-  },
+  initialState,
   reducers: {
     setEditingCourse: (state, action) => {
       state.editingCourse = action.payload;
@@ -76,25 +84,24 @@ const courseSlice = createSlice({
       .addCase(fetchCourses.fulfilled, (state, action) => {
         state.courses = action.payload;
         state.loading = false;
+        localStorage.setItem('coursesState', JSON.stringify(state)); // Save state to localStorage
       })
       .addCase(fetchCourses.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       })
-      .addCase(updateCourse.pending, (state) => {
+      .addCase(fetchStudentCourses.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateCourse.fulfilled, (state, action) => {
-        const updatedCourse = action.payload;
-        state.courses = state.courses.map((course) =>
-          course._id === updatedCourse._id ? updatedCourse : course
-        );
+      .addCase(fetchStudentCourses.fulfilled, (state, action) => {
         state.loading = false;
+        state.studentCourses = action.payload;
+        localStorage.setItem('coursesState', JSON.stringify(state)); // Save state to localStorage
       })
-      .addCase(updateCourse.rejected, (state, action) => {
+      .addCase(fetchStudentCourses.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload;
       });
   },
 });

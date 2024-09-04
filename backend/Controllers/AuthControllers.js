@@ -1,9 +1,8 @@
 import bcrypt from "bcrypt";
 import { User } from "../models/User.js";
 import dotenv from "dotenv";
-import mongoose from "mongoose";
+
 import jwt from "jsonwebtoken"
-import { response } from "express";
 
 
 
@@ -59,7 +58,7 @@ export const login = async (req, res) => {
     res.cookie("token", token, { httpOnly: true, maxAge: 3600000 }); // 1 hour
     return res
       .status(200)
-      .json({ status: true, message: "Login successful", id: user._id, role: user.role});
+      .json({ status: true, message: "Login successful", id: user._id, role: user.role,token:token});
   } catch (error) {
     console.error("Error logging in:", error);
     return res.status(500).json({ message: "An error occurred during login" });
